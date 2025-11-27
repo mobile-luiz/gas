@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gás App - Pedidos e Consumo com Firebase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
+    <style>
+        /* ESTILOS DE LAYOUT E COMPONENTES */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #eef2f7; color: #333; }
+        #login-section { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #loginForm { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; width: 300px; }
+        input, select { margin-bottom: 15px; padding: 10px; border-radius: 4px; border: 1px solid #ddd; font-size: 16px; }
+        button { padding: 10px; border-radius: 4px; border: none; font-size: 16px; cursor: pointer; transition: background-color 0.3s; }
+        #loginButton { background-color: #007bff; color: white; margin-bottom: 10px; }
+        #signupButton { background-color: #28a745; color: white; }
+        #error-message { color: red; text-align: center; margin-top: 15px; font-weight: bold; }
+        #dashboard-section { display: none; min-height: 100vh; }
+        .header { background-color: #007bff; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .container { padding: 20px; max-width: 1200px; margin: 20px auto; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background-color: white; border-radius: 10px; padding: 25px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); }
+        .card h3 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; color: #007bff; }
+        .icon { font-size: 2em; margin-right: 15px; color: #007bff; }
+        .pedido-btn { background-color: #28a745; color: white; margin-top: 10px; width: 100%; font-size: 1em; }
+        #submit-pedido-btn { background-color: #007bff; }
+        #submit-consumo-btn { background-color: #dc3545; }
+        .logout-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1em; padding: 5px 10px; }
+        #historico-lista { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px; }
+        #historico-lista li { border-bottom: 1px dashed #eee; padding: 8px 0; font-size: 0.9em; }
+        .status-pendente { color: orange; }
+        .status-entregue { color: green; }
+        #filtroStatus { margin-bottom: 15px; width: 100%; }
+
+        /* ESTILOS DOS MODAIS */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6); 
+            padding-top: 50px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto; 
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%; 
+            max-width: 500px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation-name: animatetop;
+            animation-duration: 0.4s;
+        }
+        .modal-pedido .modal-content { border: 2px solid #ffc107; }
+        .modal-consumo .modal-content { border: 2px solid #dc3545; }
+        .modal-content h3 { padding-bottom: 10px; margin-top: 0; }
+        .modal-pedido h3 { color: #ffc107; border-bottom-color: #ffc107; }
+        .modal-consumo h3 { color: #dc3545; border-bottom-color: #dc3545; }
+        
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        @keyframes animatetop {
+            from {top: -300px; opacity: 0} 
+            to {top: 0; opacity: 1}
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-section">
+        <form id="loginForm">
+            <h2>Acesso ao Sistema</h2>
+            <label for="email">E-mail:</label>
+            <input type="email" id="email" required placeholder="seu@email.com">
+            <label for="password">Senha:</label>
+            <input type="password" id="password" required placeholder="Mínimo 6 caracteres">
+            <button type="submit" id="loginButton">Entrar</button>
+            <button type="button" id="signupButton">Cadastrar</button>
+            <p id="error-message"></p>
+        </form>
+    </div>
+
+    <div id="dashboard-section">
+        <div class="header">
+            <h1><i class="fas fa-fire-extinguisher"></i> Central Gás & Pedidos</h1>
+            <button id="logoutButton" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
+        </div>
+
+        <div class="container">
+            <h2>Bem-vindo à sua área de gestão!</h2>
+            <p>Usuário logado: <strong id="user-email-display"></strong></p>
+
+            <div class="card-grid">
+
+                <div class="card">
+                    <h3><i class="fas fa-truck icon"></i> Novo Pedido de Gás</h3>
+                    <p>Solicite a entrega. O **WhatsApp será aberto automaticamente**.</p>
+                    <button class="pedido-btn" id="open-pedido-form-btn"><i class="fas fa-shopping-cart"></i> Fazer Pedido Agora</button>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-history icon"></i> Histórico de Entregas</h3>
+                    <p>Seus últimos pedidos:</p>
+                    
+                    <label for="filtroStatus">Filtrar por Status:</label>
+                    <select id="filtroStatus" style="margin-bottom: 15px; width: 100%;">
+                        <option value="todos">Mostrar Todos</option>
+                        <option value="Pendente">Pendente</option>
+                        <option value="Entregue">Entregue</option>
+                    </select>
+                    
+                    <ul id="historico-lista">
+                        <li><i class="fas fa-spinner fa-spin"></i> Carregando histórico...</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-chart-line icon"></i> Seu Consumo Médio</h3>
+                    <p>Média de duração do último botijão:</p>
+                    <p id="consumo-display" style="font-size: 1.5em; font-weight: bold; color: #dc3545;">---</p>
+                    <button id="open-consumo-form-btn" class="pedido-btn" style="background-color: #dc3545;"><i class="fas fa-plus-circle"></i> Registrar Consumo</button>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1;"> 
+                    <h3><i class="fas fa-chart-bar icon"></i> Pedidos por Mês</h3>
+                    <p>Acompanhe a quantidade total de gás comprada mensalmente.</p>
+                    <div style="max-height: 400px; width: 100%;">
+                        <canvas id="pedidosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="pedido-modal" class="modal modal-pedido">
+        <div class="modal-content">
+            <span class="close-btn pedido-close-btn">&times;</span>
+            <h3><i class="fas fa-gas-pump icon" style="color:#ffc107;"></i> Detalhes do Pedido</h3>
+            <form id="pedidoForm">
+                <label for="tipoGas">Tipo de Gás:</label>
+                <select id="tipoGas" required>
+                    <option value="P13">P13 (Botijão de Cozinha)</option>
+                    <option value="P45">P45 (Cilindro)</option>
+                </select>
+                <label for="quantidade">Quantidade:</label>
+                <input type="number" id="quantidade" value="1" min="1" required>
+                <label for="endereco">Endereço de Entrega:</label>
+                <input type="text" id="endereco" required placeholder="Rua, Número, Complemento">
+                
+                <label for="formaPagamento">Forma de Pagamento:</label>
+                <select id="formaPagamento" required>
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="Cartao">Cartão (Débito/Crédito)</option>
+                    <option value="PIX">PIX</option>
+                </select>
+                
+                <p id="pedido-message" style="text-align: center; margin-top: 10px;"></p>
+                
+                <button type="submit" id="submit-pedido-btn"><i class="fas fa-paper-plane"></i> Enviar Pedido e Abrir WhatsApp</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="consumo-modal" class="modal modal-consumo">
+        <div class="modal-content">
+            <span class="close-btn consumo-close-btn">&times;</span>
+            <h3><i class="fas fa-clock icon" style="color:#dc3545;"></i> Registrar Uso</h3>
+            <form id="consumoForm">
+                <label for="diasDuracao">Dias de Duração do Último Botijão:</label>
+                <input type="number" id="diasDuracao" min="1" required placeholder="Ex: 45">
+                <label for="dataRegistro">Data do Registro (Troca):</label>
+                <input type="date" id="dataRegistro" required>
+                <p id="consumo-message" style="text-align: center; margin-top: 10px;"></p>
+                <button type="submit" id="submit-consumo-btn"><i class="fas fa-save"></i> Salvar Consumo</button>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+
+    <script>
+        // **!!! IMPORTANTE: SUBSTITUA PELAS SUAS CONFIGURAÇÕES DO FIREBASE !!!**
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgmVCXYByZINmC_TQGXf8j23khKolRp4I",
+            authDomain: "gasapp-b48b1.firebaseapp.com",
+            databaseURL: "https://gasapp-b48b1-default-rtdb.firebaseio.com",
+            projectId: "gasapp-b48b1",
+            storageBucket: "gasapp-b48b1.firebasestorage.app",
+            messagingSenderId: "91157049244",
+            appId: "1:91157049244:web:d84da8f96637958d1d2259",
+            measurementId: "G-DW6NQ9NCEE"
+        };
+
+        // VARIÁVEL CHAVE - NÚMERO DO WHATSAPP (Apenas números: Código País + DDD + Número)
+        const whatsappNumber = "5581982714884"; 
+        
+        firebase.initializeApp(firebaseConfig);
+        
+        const auth = firebase.auth();
+        const database = firebase.database();
+        
+        // REFERÊNCIAS DO DOM - GERAL
+        const loginSection = document.getElementById('login-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const loginForm = document.getElementById('loginForm');
+        const signupButton = document.getElementById('signupButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('error-message');
+        const userEmailDisplay = document.getElementById('user-email-display');
+        
+        // REFERÊNCIAS MODAL PEDIDO
+        const openPedidoFormBtn = document.getElementById('open-pedido-form-btn');
+        const pedidoModal = document.getElementById('pedido-modal'); 
+        const pedidoCloseBtn = document.querySelector('.pedido-close-btn'); 
+        const pedidoForm = document.getElementById('pedidoForm');
+        const pedidoMessage = document.getElementById('pedido-message');
+        const submitPedidoBtn = document.getElementById('submit-pedido-btn');
+        const historicoLista = document.getElementById('historico-lista');
+        const filtroStatus = document.getElementById('filtroStatus'); // NOVO FILTRO
+
+        // REFERÊNCIAS MODAL CONSUMO E GRÁFICO
+        const consumoDisplay = document.getElementById('consumo-display');
+        const openConsumoFormBtn = document.getElementById('open-consumo-form-btn');
+        const consumoModal = document.getElementById('consumo-modal');
+        const consumoCloseBtn = document.querySelector('.consumo-close-btn');
+        const consumoForm = document.getElementById('consumoForm');
+        const consumoMessage = document.getElementById('consumo-message');
+        const chartCanvas = document.getElementById('pedidosChart');
+        let monthlyChart = null;
+
+        // REGISTRA O PLUGIN DATALABELS
+        if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+        }
+        
+        // EVENT LISTENER PARA O FILTRO
+        filtroStatus.addEventListener('change', () => {
+            if (auth.currentUser) {
+                loadUserData(auth.currentUser.uid); 
+            }
+        });
+
+
+        // =========================================================
+        // FUNÇÕES DE CONTROLE DE TELA E DADOS
+        // =========================================================
+
+        /** Alterna a visualização entre Login e Dashboard */
+        function toggleView(isLoggedIn, user) {
+            if (isLoggedIn) {
+                loginSection.style.display = 'none';
+                dashboardSection.style.display = 'block';
+                userEmailDisplay.textContent = user.email;
+                loadUserData(user.uid);
+            } else {
+                loginSection.style.display = 'flex';
+                dashboardSection.style.display = 'none';
+                loginForm.reset();
+                pedidoModal.style.display = 'none'; 
+                consumoModal.style.display = 'none';
+            }
+        }
+
+        /** Carrega Histórico, Consumo e Gera o Gráfico do Firebase */
+        async function loadUserData(uid) {
+            // 1. CARREGAR HISTÓRICO DE PEDIDOS E DADOS PARA O GRÁFICO
+            historicoLista.innerHTML = '<li><i class="fas fa-spinner fa-spin"></i> Carregando pedidos...</li>';
+            let pedidosData = {}; 
+            const filtroAtual = filtroStatus.value; 
+            
+            try {
+                // Busca todos os pedidos
+                const snapshotPedidos = await database.ref('pedidos/')
+                    .orderByChild('userId')
+                    .equalTo(uid)
+                    .once('value'); 
+
+                const pedidos = snapshotPedidos.val();
+                historicoLista.innerHTML = '';
+
+                if (pedidos) {
+                    pedidosData = pedidos; 
+                    
+                    let pedidosArray = Object.values(pedidos).reverse(); 
+
+                    // APLICA O FILTRO DE STATUS
+                    if (filtroAtual !== 'todos') {
+                        pedidosArray = pedidosArray.filter(p => p.status === filtroAtual);
+                    }
+
+                    const pedidosParaExibir = pedidosArray.slice(0, 5); // Limita a 5 (já filtrados)
+
+                    if (pedidosParaExibir.length > 0) {
+                         pedidosParaExibir.forEach(p => {
+                            const li = document.createElement('li');
+                            const statusClass = p.status === 'Entregue' ? 'status-entregue' : 'status-pendente';
+                            const icon = p.status === 'Entregue' ? 'fa-check-circle' : 'fa-sync-alt';
+                            const dataFormatada = new Date(p.dataPedido).toLocaleDateString('pt-BR');
+
+                            li.innerHTML = `<i class="fas ${icon} ${statusClass}"></i> ${p.tipoGas} x${p.quantidade} (${p.formaPagamento || 'Não Informado'}) - <strong class="${statusClass}">${p.status}</strong> (${dataFormatada})`;
+                            historicoLista.appendChild(li);
+                        });
+                    } else {
+                         historicoLista.innerHTML = `<li>Nenhum pedido com status "${filtroAtual}" encontrado.</li>`;
+                    }
+                   
+                } else {
+                    historicoLista.innerHTML = '<li>Nenhum pedido encontrado.</li>';
+                }
+            } catch (error) {
+                historicoLista.innerHTML = '<li>Erro ao carregar histórico.</li>';
+                console.error("Erro ao carregar pedidos:", error);
+            }
+            
+            // 2. GERAR GRÁFICO
+            createMonthlyChart(pedidosData);
+
+            // 3. CARREGAR CONSUMO
+            consumoDisplay.textContent = '---';
+            try {
+                const snapshotConsumo = await database.ref(`consumo/${uid}`).once('value');
+                const consumo = snapshotConsumo.val(); 
+
+                if (consumo && consumo.diasDuracao) {
+                    consumoDisplay.innerHTML = `${consumo.diasDuracao} dias`;
+                } else {
+                    consumoDisplay.textContent = 'Nenhum registro.';
+                }
+            } catch (error) {
+                consumoDisplay.textContent = 'Erro de leitura.';
+                console.error("Erro de leitura do consumo:", error);
+            }
+        }
+
+        /** Processa os dados de pedidos e gera o gráfico mensal com data labels. */
+        function createMonthlyChart(pedidos) {
+            if (!pedidos || Object.keys(pedidos).length === 0 || !chartCanvas) {
+                if (monthlyChart) monthlyChart.destroy(); 
+                return;
+            }
+
+            const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            
+            const monthlyData = {};
+            Object.values(pedidos).forEach(pedido => {
+                if (!pedido.quantidade) return;
+                
+                const date = new Date(pedido.dataPedido);
+                const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+                
+                if (!monthlyData[key]) {
+                    monthlyData[key] = {
+                        label: monthNames[date.getMonth()] + '/' + date.getFullYear().toString().slice(-2),
+                        quantidadeTotal: 0
+                    };
+                }
+                monthlyData[key].quantidadeTotal += parseInt(pedido.quantidade);
+            });
+
+            const sortedKeys = Object.keys(monthlyData).sort();
+
+            const labels = sortedKeys.map(key => monthlyData[key].label);
+            const data = sortedKeys.map(key => monthlyData[key].quantidadeTotal);
+
+            if (monthlyChart) {
+                monthlyChart.destroy();
+            }
+            
+            const ctx = chartCanvas.getContext('2d');
+            monthlyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Botijões Comprados',
+                        data: data,
+                        backgroundColor: 'rgba(0, 123, 255, 0.7)',
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantidade de Botijões'
+                            },
+                            ticks: {
+                                stepSize: 1 
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Histórico de Compras de Gás'
+                        },
+                        datalabels: { 
+                            anchor: 'end', 
+                            align: 'top', 
+                            formatter: (value) => value,
+                            color: '#333', 
+                            font: {
+                                weight: 'bold' 
+                            },
+                            offset: 4 
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // =========================================================
+        // LÓGICA DE AUTENTICAÇÃO
+        // =========================================================
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                toggleView(true, user);
+            } else {
+                toggleView(false);
+            }
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            errorMessage.textContent = ''; 
+            auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value)
+                .catch((error) => {
+                    errorMessage.textContent = '❌ Erro: E-mail ou senha incorretos.';
+                });
+        });
+
+        signupButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            errorMessage.textContent = ''; 
+            auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value)
+                .catch((error) => {
+                    let msg = (error.code === 'auth/email-already-in-use') ? 'O e-mail fornecido já está em uso.' : 'A senha deve ter pelo menos 6 caracteres.';
+                    errorMessage.textContent = `❌ Erro: ${msg}`;
+                });
+        });
+
+        logoutButton.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                alert("Logout realizado com sucesso.");
+            }).catch((error) => {
+                console.error('Erro ao fazer logout:', error);
+            });
+        });
+
+
+        // =========================================================
+        // LÓGICA DE MODAL E PEDIDOS
+        // =========================================================
+        
+        // ABRIR O MODAL DE PEDIDO
+        openPedidoFormBtn.addEventListener('click', () => {
+            pedidoModal.style.display = 'block'; 
+            consumoModal.style.display = 'none'; 
+            submitPedidoBtn.disabled = false;
+            pedidoMessage.textContent = '';
+        });
+
+        // FECHAR MODAIS
+        pedidoCloseBtn.addEventListener('click', () => {
+            pedidoModal.style.display = 'none';
+        });
+        
+        consumoCloseBtn.addEventListener('click', () => {
+            consumoModal.style.display = 'none';
+        });
+
+        // FECHAR QUALQUER MODAL (Clicar fora)
+        window.addEventListener('click', (event) => {
+            if (event.target == pedidoModal) {
+                pedidoModal.style.display = 'none';
+            }
+            if (event.target == consumoModal) {
+                consumoModal.style.display = 'none';
+            }
+        });
+
+        // SUBMISSÃO DO FORMULÁRIO DE PEDIDO
+        pedidoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            fazerPedidoDeGas();
+        });
+
+        /** * Salva o pedido no Firebase e TENTA abrir o WhatsApp. */
+        function fazerPedidoDeGas() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const tipoGas = document.getElementById('tipoGas').value;
+            const quantidade = document.getElementById('quantidade').value;
+            const endereco = document.getElementById('endereco').value;
+            const formaPagamento = document.getElementById('formaPagamento').value; 
+            
+            // 1. Feedback e Desativação do botão
+            submitPedidoBtn.disabled = true;
+            pedidoMessage.style.color = 'blue';
+            pedidoMessage.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando pedido e **tentando abrir o WhatsApp**...';
+
+            const pedido = {
+                userId: user.uid,
+                email: user.email,
+                tipoGas: tipoGas,
+                quantidade: parseInt(quantidade),
+                endereco: endereco,
+                formaPagamento: formaPagamento, 
+                dataPedido: new Date().toISOString(),
+                status: 'Pendente'
+            };
+
+            // 2. Salva no Firebase
+            database.ref('pedidos/').push(pedido)
+                .then(() => {
+                    // 3. Monta a Mensagem do WhatsApp
+                    
+                    const mensagem = `*NOVO PEDIDO URGENTE!*%0A%0AUsuário: ${user.email}%0AProduto: ${tipoGas} (x${quantidade})%0AEndereço: ${endereco}%0APagamento: *${formaPagamento}*%0A%0A*UID:* ${user.uid.substring(0, 8)}...`;
+                    
+                    // Número deve ser apenas dígitos.
+                    const url = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${mensagem}`;
+                    
+                    window.open(url, '_blank');
+                    
+                    pedidoMessage.style.color = 'green';
+                    pedidoMessage.innerHTML = '✅ Pedido salvo! Verifique se a aba do WhatsApp foi aberta.';
+                    
+                    pedidoForm.reset(); 
+                    loadUserData(user.uid); 
+
+                    // 4. Finalização: Fechar Modal
+                    submitPedidoBtn.disabled = false;
+                    setTimeout(() => {
+                         pedidoModal.style.display = 'none'; 
+                    }, 5000);
+
+                })
+                .catch((error) => {
+                    // 5. Tratamento de Erro
+                    pedidoMessage.style.color = 'red';
+                    pedidoMessage.textContent = '❌ Erro ao salvar pedido: ' + error.message;
+                    submitPedidoBtn.disabled = false;
+                });
+        }
+
+
+        // =========================================================
+        // LÓGICA DE MODAL E CONSUMO
+        // =========================================================
+
+        // ABRIR O MODAL DE CONSUMO
+        openConsumoFormBtn.addEventListener('click', () => {
+            consumoModal.style.display = 'block';
+            pedidoModal.style.display = 'none'; 
+            consumoMessage.textContent = '';
+        });
+
+        // SUBMISSÃO DO FORMULÁRIO DE CONSUMO
+        consumoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            salvarConsumo();
+        });
+
+        function salvarConsumo() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const diasDuracao = document.getElementById('diasDuracao').value;
+            const dataRegistro = document.getElementById('dataRegistro').value;
+
+            const consumoData = {
+                diasDuracao: parseInt(diasDuracao),
+                dataRegistro: new Date(dataRegistro).toISOString(),
+                registradoEm: new Date().toISOString()
+            };
+
+            consumoMessage.textContent = 'Salvando...';
+            
+            database.ref(`consumo/${user.uid}`).set(consumoData)
+                .then(() => {
+                    consumoMessage.style.color = 'green';
+                    consumoMessage.textContent = '✅ Consumo registrado com sucesso!';
+                    consumoForm.reset();
+                    consumoModal.style.display = 'none'; 
+                    loadUserData(user.uid); 
+                })
+                .catch((error) => {
+                    consumoMessage.style.color = 'red';
+                    consumoMessage.textContent = '❌ Erro ao salvar consumo: ' + error.message;
+                });
+        }
+    </script>
+
+</body>
+</html>
