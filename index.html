@@ -3,99 +3,387 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gás App - Pedidos e Consumo com Firebase</title>
+    <title>Gás App - Pedidos e Consumo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script> 
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
     <style>
-        /* ESTILOS DE LAYOUT E COMPONENTES */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #eef2f7; color: #333; }
-        #login-section { display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #loginForm { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; width: 300px; }
-        input, select { margin-bottom: 15px; padding: 10px; border-radius: 4px; border: 1px solid #ddd; font-size: 16px; }
-        button { padding: 10px; border-radius: 4px; border: none; font-size: 16px; cursor: pointer; transition: background-color 0.3s; }
-        #loginButton { background-color: #007bff; color: white; margin-bottom: 10px; }
-        #signupButton { background-color: #28a745; color: white; }
-        #error-message { color: red; text-align: center; margin-top: 15px; font-weight: bold; }
-        #dashboard-section { display: none; min-height: 100vh; }
-        .header { background-color: #007bff; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-        .container { padding: 20px; max-width: 1200px; margin: 20px auto; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background-color: white; border-radius: 10px; padding: 25px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); }
-        .card h3 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; color: #007bff; }
-        .icon { font-size: 2em; margin-right: 15px; color: #007bff; }
-        .pedido-btn { background-color: #28a745; color: white; margin-top: 10px; width: 100%; font-size: 1em; }
-        #submit-pedido-btn { background-color: #007bff; }
-        #submit-consumo-btn { background-color: #dc3545; }
-        .logout-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1em; padding: 5px 10px; }
-        #historico-lista { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px; }
-        #historico-lista li { border-bottom: 1px dashed #eee; padding: 8px 0; font-size: 0.9em; }
-        .status-pendente { color: orange; }
-        .status-entregue { color: green; }
-        #filtroStatus { margin-bottom: 15px; width: 100%; }
+        /* ========================================================= */
+        /* GERAL & ESTILO MODERNO */
+        /* ========================================================= */
+        :root {
+            --primary-color: #007bff; /* Azul */
+            --secondary-color: #28a745; /* Verde */
+            --warning-color: #ffc107; /* Amarelo */
+            --danger-color: #dc3545; /* Vermelho */
+            --background-gradient: linear-gradient(135deg, #f0f4f8 0%, #e0e7ee 100%);
+            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+        }
 
-        /* ESTILOS DOS MODAIS */
-        .modal {
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            background: var(--background-gradient); 
+            color: #333; 
+            line-height: 1.6;
+        }
+        
+        /* ========================================================= */
+        /* TELA DE LOGIN */
+        /* ========================================================= */
+        #login-section { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+        }
+        
+        #loginForm { 
+            background: white; 
+            padding: 50px; 
+            border-radius: var(--radius); 
+            box-shadow: var(--box-shadow); 
+            display: flex; 
+            flex-direction: column; 
+            width: 100%;
+            max-width: 450px; 
+            text-align: center;
+        }
+        
+        #loginForm h2 {
+            color: var(--primary-color);
+            margin-bottom: 35px; 
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+        
+        #loginForm input { 
+            margin-bottom: 25px; 
+            padding: 16px 15px; 
+            border-radius: 8px; 
+            border: 1px solid #ddd; 
+            font-size: 17px; 
+            width: 100%; 
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        #loginForm input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+            outline: none;
+        }
+        
+        button { 
+            padding: 14px 20px; 
+            border-radius: 8px; 
+            border: none; 
+            font-size: 17px; 
+            cursor: pointer; 
+            transition: background-color 0.3s, transform 0.1s;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #loginButton { 
+            background-color: var(--primary-color); 
+            color: white; 
+            margin-bottom: 5px; 
+        }
+        
+        #openSignupModalBtn { 
+            background-color: var(--secondary-color); 
+            color: white; 
+            margin-bottom: 15px;
+        }
+        
+        .link-button { 
+            background: none; 
+            color: var(--primary-color); 
+            border: none; 
+            padding: 0; 
+            margin-top: 10px; 
+            cursor: pointer; 
+            font-size: 0.9em; 
+            text-align: center;
+        } 
+        
+        /* ========================================================= */
+        /* DASHBOARD */
+        /* ========================================================= */
+        #dashboard-section { display: none; min-height: 100vh; }
+        .header { background-color: var(--primary-color); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+        .container { padding: 20px; max-width: 1200px; margin: 20px auto; }
+        
+        .card-grid { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            align-items: stretch; 
+        }
+
+        .card { 
+            background-color: white; 
+            border-radius: 10px; 
+            padding: 25px; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            flex: 1 1 calc(25% - 15px); 
+            min-width: 250px; 
+        }
+        
+        .chart-container {
+            height: 180px; 
+            width: 100%;
+        }
+
+        .card h3 { border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-top: 0; color: var(--primary-color); font-size: 1.2em; }
+        .icon { font-size: 2em; margin-right: 15px; color: var(--primary-color); }
+        .pedido-btn { background-color: var(--secondary-color); color: white; margin-top: 10px; width: 100%; font-size: 1em; }
+        .logout-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1em; padding: 5px 10px; }
+        
+        .card input, .card select, #filtroStatus { 
+            margin-bottom: 15px; 
+            padding: 12px; 
+            border-radius: 4px; 
+            border: 1px solid #ddd; 
+            font-size: 17px; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }
+
+        #historico-lista {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        #historico-lista li {
+            margin-bottom: 8px; 
+            line-height: 1.3; 
+        }
+        
+        /* ========================================================= */
+        /* ESTILOS DOS MODAIS (MAIS BONITOS) */
+        /* ========================================================= */
+        
+        @keyframes animatetop {
+            from {top: -300px; opacity: 0}
+            to {top: 0; opacity: 1}
+        }
+
+        .modal { 
             display: none; 
             position: fixed; 
             z-index: 1000; 
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.6); 
-            padding-top: 50px;
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.5); 
+            padding-top: 50px; 
         }
-        .modal-content {
-            background-color: #fefefe;
+        
+        .modal-content { 
+            background-color: #fefefe; 
             margin: auto; 
-            padding: 30px;
-            border-radius: 10px;
+            padding: 30px; 
+            border-radius: 12px; 
             width: 90%; 
             max-width: 500px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            animation-name: animatetop;
-            animation-duration: 0.4s;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2); 
+            animation-name: animatetop; 
+            animation-duration: 0.4s; 
+            display: flex; 
+            flex-direction: column; 
+            border: 1px solid #e0e0e0; 
         }
-        .modal-pedido .modal-content { border: 2px solid #ffc107; }
-        .modal-consumo .modal-content { border: 2px solid #dc3545; }
-        .modal-content h3 { padding-bottom: 10px; margin-top: 0; }
-        .modal-pedido h3 { color: #ffc107; border-bottom-color: #ffc107; }
-        .modal-consumo h3 { color: #dc3545; border-bottom-color: #dc3545; }
         
-        .close-btn {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
+        .modal-content h3 { 
+            padding-bottom: 15px; 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid;
+            display: flex;
+            align-items: center;
+            color: #333; 
         }
+        
+        .modal-content h3 .icon {
+            font-size: 1.5em; 
+            margin-right: 15px;
+        }
+        
+        .close-btn { 
+            color: #999; 
+            float: right; 
+            font-size: 30px; 
+            font-weight: 300; 
+            align-self: flex-end; 
+            cursor: pointer;
+            transition: color 0.3s;
+            line-height: 1;
+        }
+        
         .close-btn:hover,
         .close-btn:focus {
-            color: #333;
+            color: var(--danger-color);
             text-decoration: none;
+        }
+
+        /* Cores de borda e título específicas por modal */
+        .modal-pedido h3 { color: #555; border-bottom-color: var(--warning-color); }
+        .modal-consumo h3 { color: #555; border-bottom-color: var(--danger-color); }
+        #signup-modal h3 { color: #555; border-bottom-color: var(--secondary-color); }
+        #recover-modal h3 { color: #555; border-bottom-color: var(--warning-color); }
+
+        /* Estilo para Inputs e Selects dentro dos modais */
+        .modal-content input[type="email"],
+        .modal-content input[type="password"],
+        .modal-content input[type="text"],
+        .modal-content input[type="tel"],
+        .modal-content input[type="number"],
+        .modal-content input[type="date"],
+        .modal-content select {
+            margin-bottom: 20px; 
+            padding: 14px 15px; 
+            border-radius: 8px; 
+            border: 1px solid #ccc; 
+            font-size: 16px; 
+            width: 100%; 
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .modal-content input:focus,
+        .modal-content select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.15); 
+            outline: none;
+        }
+
+        /* Estilo para Botões de Ação dentro dos modais */
+        .modal-content button[type="submit"] {
+            padding: 16px 25px; 
+            border-radius: 10px; 
+            font-size: 1.1em; 
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 15px; 
+        }
+
+        .modal-content button:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+        
+        /* Preço Readonly no modal de pedido */
+        .price-display { 
+            background-color: #f8f9fa; 
+            padding: 14px 15px !important; 
+            font-size: 1.1em;
+            border-radius: 8px;
+        }
+
+        /* ========================================================= */
+        /* SELEÇÃO DE PAGAMENTO VISUAL (Modal Pedido) */
+        /* ========================================================= */
+        .payment-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .payment-option-label {
+            flex-grow: 1;
+            min-width: 90px;
+        }
+        
+        .payment-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 5px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
             cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            background-color: #fefefe;
+            height: 100%;
         }
-        @keyframes animatetop {
-            from {top: -300px; opacity: 0} 
-            to {top: 0; opacity: 1}
+
+        .payment-option i {
+            font-size: 1.6em;
+            margin-bottom: 5px;
+            color: #666;
+            transition: color 0.2s;
         }
+        
+        .payment-option input[type="radio"] {
+            display: none; 
+        }
+        
+        .payment-option.selected {
+            border-color: var(--secondary-color);
+            background-color: #e6ffec; 
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+        }
+        
+        .payment-option.selected i {
+            color: var(--secondary-color); 
+        }
+
+        /* Responsividade */
+        @media (max-width: 1100px) {
+            .card {
+                flex: 1 1 calc(50% - 10px); 
+            }
+        }
+        @media (max-width: 600px) {
+            #loginForm { 
+                padding: 30px 20px; 
+                max-width: 90%; 
+            }
+            .payment-options {
+                justify-content: space-around;
+            }
+            .card {
+                flex: 1 1 100%; 
+            }
+        }
+        
     </style>
 </head>
 <body>
 
     <div id="login-section">
         <form id="loginForm">
-            <h2>Acesso ao Sistema</h2>
-            <label for="email">E-mail:</label>
+            <h2><i class="fas fa-sign-in-alt"></i> Acesso ao Sistema</h2>
+            
+            <label for="email" style="text-align: left; font-weight: bold; margin-bottom: 5px;">E-mail:</label>
             <input type="email" id="email" required placeholder="seu@email.com">
-            <label for="password">Senha:</label>
+            
+            <label for="password" style="text-align: left; font-weight: bold; margin-bottom: 5px;">Senha:</label>
             <input type="password" id="password" required placeholder="Mínimo 6 caracteres">
-            <button type="submit" id="loginButton">Entrar</button>
-            <button type="button" id="signupButton">Cadastrar</button>
-            <p id="error-message"></p>
+            
+            <button type="submit" id="loginButton"><i class="fas fa-lock"></i> Entrar</button>
+            
+            <button type="button" id="openSignupModalBtn"><i class="fas fa-user-plus"></i> Cadastrar</button>
+            
+            <button type="button" id="openRecoverModalBtn" class="link-button">Esqueceu a Senha?</button>
+
+            <p id="error-message" style="color: var(--danger-color); text-align: center; margin-top: 15px; font-weight: bold;"></p>
         </form>
     </div>
 
@@ -106,7 +394,7 @@
         </div>
 
         <div class="container">
-            <h2>Bem-vindo à sua área de gestão!</h2>
+            <h2>Olá! Seu painel de controle.</h2>
             <p>Usuário logado: <strong id="user-email-display"></strong></p>
 
             <div class="card-grid">
@@ -114,6 +402,14 @@
                 <div class="card">
                     <h3><i class="fas fa-truck icon"></i> Novo Pedido de Gás</h3>
                     <p>Solicite a entrega. O **WhatsApp será aberto automaticamente**.</p>
+                    
+                    <p style="text-align: center; margin: 15px 0;">
+                        Preço Atual do P13: <br>
+                        <strong id="gas-price-display" style="font-size: 1.6em; color: var(--secondary-color);">R$ 100,00</strong>
+                    </p>
+                    <p style="font-size: 0.8em; color: #6c757d; text-align: center; border-top: 1px dashed #eee; padding-top: 10px; margin-bottom: 5px;">
+                        *Preço sujeito a alterações a qualquer momento.
+                    </p>
                     <button class="pedido-btn" id="open-pedido-form-btn"><i class="fas fa-shopping-cart"></i> Fazer Pedido Agora</button>
                 </div>
 
@@ -122,7 +418,7 @@
                     <p>Seus últimos pedidos:</p>
                     
                     <label for="filtroStatus">Filtrar por Status:</label>
-                    <select id="filtroStatus" style="margin-bottom: 15px; width: 100%;">
+                    <select id="filtroStatus">
                         <option value="todos">Mostrar Todos</option>
                         <option value="Pendente">Pendente</option>
                         <option value="Entregue">Entregue</option>
@@ -132,51 +428,77 @@
                         <li><i class="fas fa-spinner fa-spin"></i> Carregando histórico...</li>
                     </ul>
                 </div>
-
+                
                 <div class="card">
                     <h3><i class="fas fa-chart-line icon"></i> Seu Consumo Médio</h3>
                     <p>Média de duração do último botijão:</p>
-                    <p id="consumo-display" style="font-size: 1.5em; font-weight: bold; color: #dc3545;">---</p>
-                    <button id="open-consumo-form-btn" class="pedido-btn" style="background-color: #dc3545;"><i class="fas fa-plus-circle"></i> Registrar Consumo</button>
+                    <p id="consumo-display" style="font-size: 1.5em; font-weight: bold; color: var(--danger-color);">---</p>
+                    <button id="open-consumo-form-btn" class="pedido-btn" style="background-color: var(--danger-color);"><i class="fas fa-plus-circle"></i> Registrar Consumo</button>
                 </div>
-
-                <div class="card" style="grid-column: 1 / -1;"> 
+                
+                <div class="card"> 
                     <h3><i class="fas fa-chart-bar icon"></i> Pedidos por Mês</h3>
                     <p>Acompanhe a quantidade total de gás comprada mensalmente.</p>
-                    <div style="max-height: 400px; width: 100%;">
+                    <div class="chart-container"> 
                         <canvas id="pedidosChart"></canvas>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
-
-
+    
     <div id="pedido-modal" class="modal modal-pedido">
         <div class="modal-content">
             <span class="close-btn pedido-close-btn">&times;</span>
-            <h3><i class="fas fa-gas-pump icon" style="color:#ffc107;"></i> Detalhes do Pedido</h3>
+            <h3><i class="fas fa-gas-pump icon" style="color:var(--warning-color);"></i> Detalhes do Pedido</h3>
             <form id="pedidoForm">
-                <label for="tipoGas">Tipo de Gás:</label>
+                <label for="tipoGas" style="font-weight: bold;">Tipo de Gás:</label>
                 <select id="tipoGas" required>
                     <option value="P13">P13 (Botijão de Cozinha)</option>
-                    <option value="P45">P45 (Cilindro)</option>
+                    
                 </select>
-                <label for="quantidade">Quantidade:</label>
-                <input type="number" id="quantidade" value="1" min="1" required>
-                <label for="endereco">Endereço de Entrega:</label>
-                <input type="text" id="endereco" required placeholder="Rua, Número, Complemento">
                 
-                <label for="formaPagamento">Forma de Pagamento:</label>
-                <select id="formaPagamento" required>
-                    <option value="Dinheiro">Dinheiro</option>
-                    <option value="Cartao">Cartão (Débito/Crédito)</option>
-                    <option value="PIX">PIX</option>
-                </select>
+                <label for="precoUnitario" style="font-weight: bold;">Preço Unitário (R$):</label>
+                <input type="text" id="precoUnitario" readonly class="price-display">
+
+                <label for="quantidade" style="font-weight: bold;">Quantidade:</label>
+                <input type="number" id="quantidade" value="1" min="1" required>
+                
+                <label for="valorTotal" style="font-weight: bold;">Valor Total:</label>
+                <input type="text" id="valorTotal" readonly class="price-display" style="background-color: #fff3e0;">
+
+                <label style="font-weight: bold; margin-bottom: 10px;">Forma de Pagamento:</label>
+                <div class="payment-options" id="formaPagamentoOptions">
+                    <label class="payment-option-label">
+                        <input type="radio" name="formaPagamento" value="Dinheiro" required>
+                        <div class="payment-option">
+                            <i class="fas fa-money-bill-wave"></i>
+                            Dinheiro
+                        </div>
+                    </label>
+                    <label class="payment-option-label">
+                        <input type="radio" name="formaPagamento" value="Cartao">
+                        <div class="payment-option">
+                            <i class="fas fa-credit-card"></i>
+                            Cartão
+                        </div>
+                    </label>
+                    <label class="payment-option-label">
+                        <input type="radio" name="formaPagamento" value="PIX">
+                        <div class="payment-option">
+                            <i class="fas fa-qrcode"></i>
+                            PIX
+                        </div>
+                    </label>
+                </div>
+                
+                <label for="endereco" style="font-weight: bold;">Endereço de Entrega:</label>
+                <input type="text" id="endereco" required placeholder="Rua, Número, Complemento">
                 
                 <p id="pedido-message" style="text-align: center; margin-top: 10px;"></p>
                 
-                <button type="submit" id="submit-pedido-btn"><i class="fas fa-paper-plane"></i> Enviar Pedido e Abrir WhatsApp</button>
+                <button type="submit" id="submit-pedido-btn" style="background-color: var(--primary-color); color: white; margin-top: 15px;"><i class="fas fa-paper-plane"></i> Enviar Pedido e Abrir WhatsApp</button>
             </form>
         </div>
     </div>
@@ -184,18 +506,52 @@
     <div id="consumo-modal" class="modal modal-consumo">
         <div class="modal-content">
             <span class="close-btn consumo-close-btn">&times;</span>
-            <h3><i class="fas fa-clock icon" style="color:#dc3545;"></i> Registrar Uso</h3>
+            <h3><i class="fas fa-clock icon" style="color:var(--danger-color);"></i> Registrar Uso</h3>
             <form id="consumoForm">
-                <label for="diasDuracao">Dias de Duração do Último Botijão:</label>
+                <label for="diasDuracao" style="font-weight: bold;">Dias de Duração do Último Botijão:</label>
                 <input type="number" id="diasDuracao" min="1" required placeholder="Ex: 45">
-                <label for="dataRegistro">Data do Registro (Troca):</label>
+                <label for="dataRegistro" style="font-weight: bold;">Data do Registro (Troca):</label>
                 <input type="date" id="dataRegistro" required>
                 <p id="consumo-message" style="text-align: center; margin-top: 10px;"></p>
-                <button type="submit" id="submit-consumo-btn"><i class="fas fa-save"></i> Salvar Consumo</button>
+                <button type="submit" id="submit-consumo-btn" style="background-color: var(--danger-color); color: white; margin-top: 15px;"><i class="fas fa-save"></i> Salvar Consumo</button>
             </form>
         </div>
     </div>
 
+    <div id="signup-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn signup-close-btn">&times;</span>
+            <h3><i class="fas fa-user-plus icon" style="color:var(--secondary-color);"></i> Cadastro de Novo Usuário</h3>
+            <form id="signupFormModal">
+                <label for="modalEmail" style="font-weight: bold;">E-mail:</label>
+                <input type="email" id="modalEmail" required placeholder="seu@email.com">
+                
+                <label for="modalPassword" style="font-weight: bold;">Senha:</label>
+                <input type="password" id="modalPassword" required placeholder="Mínimo 6 caracteres">
+                
+                <label for="modalWhatsapp" style="font-weight: bold;">WhatsApp (DDD + Número. Ex: 81900000000):</label>
+                <input type="tel" id="modalWhatsapp" required placeholder="Ex: 81900000000">
+
+                <p id="signup-message" style="text-align: center; margin-top: 10px;"></p>
+                <button type="submit" id="modalSignupButton"><i class="fas fa-user-plus"></i> Finalizar Cadastro</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="recover-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn recover-close-btn">&times;</span>
+            <h3><i class="fas fa-unlock-alt icon" style="color:var(--warning-color);"></i> Recuperar Senha</h3>
+            <form id="recoverForm">
+                <p>Informe seu e-mail de cadastro. Enviaremos um link para redefinição de senha.</p>
+                <label for="recoverEmail" style="font-weight: bold;">E-mail:</label>
+                <input type="email" id="recoverEmail" required placeholder="seu@email.com">
+
+                <p id="recover-message" style="text-align: center; margin-top: 10px;"></p>
+                <button type="submit" id="recoverButton"><i class="fas fa-envelope"></i> Enviar Link de Recuperação</button>
+            </form>
+        </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
@@ -208,96 +564,147 @@
             authDomain: "gasapp-b48b1.firebaseapp.com",
             databaseURL: "https://gasapp-b48b1-default-rtdb.firebaseio.com",
             projectId: "gasapp-b48b1",
-            storageBucket: "gasapp-b48b1.firebasestorage.app",
+            storageBucket: "gasapp-b48b1.firebase storage.app",
             messagingSenderId: "91157049244",
             appId: "1:91157049244:web:d84da8f96637958d1d2259",
             measurementId: "G-DW6NQ9NCEE"
         };
-
-        // VARIÁVEL CHAVE - NÚMERO DO WHATSAPP (Apenas números: Código País + DDD + Número)
-        const whatsappNumber = "5581982714884"; 
         
+        // PREÇO DO GÁS E WHATSAPP
+        const GAS_PRICE_BRL = 100; // Valor fixo de R$ 100 por botijão
+        const whatsappNumber = "5581982714884"; // Número do WhatsApp do vendedor
+        
+        // =========================================================
+        // 1. INICIALIZAÇÃO E ATIVAÇÃO DO CACHE (PERSISTÊNCIA)
+        // =========================================================
         firebase.initializeApp(firebaseConfig);
         
+        // Ativa a persistência offline para reduzir o tráfego de leitura
+        try {
+            if (typeof firebase.database.enablePersistence === 'function') {
+                firebase.database().enablePersistence()
+                    .then(() => {
+                        console.log("Persistência offline do Realtime Database ativada.");
+                    })
+                    .catch((err) => {
+                        if (err.code === 'failed-precondition') {
+                            console.warn("Persistência não ativada: Múltiplas abas. Usando modo online.");
+                        } else if (err.code === 'unimplemented') {
+                            console.error("Persistência não ativada: Navegador não suporta.");
+                        }
+                    });
+            }
+        } catch (e) {
+            // Ignora, caso o ambiente não seja web
+        }
+
         const auth = firebase.auth();
         const database = firebase.database();
         
-        // REFERÊNCIAS DO DOM - GERAL
+        // =========================================================
+        // 2. REFERÊNCIAS DOM (TODOS OS ELEMENTOS)
+        // =========================================================
         const loginSection = document.getElementById('login-section');
         const dashboardSection = document.getElementById('dashboard-section');
         const loginForm = document.getElementById('loginForm');
-        const signupButton = document.getElementById('signupButton');
         const logoutButton = document.getElementById('logoutButton');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
         const errorMessage = document.getElementById('error-message');
         const userEmailDisplay = document.getElementById('user-email-display');
         
+        // REFERÊNCIAS MODAL CADASTRO/RECUPERAÇÃO
+        const signupModal = document.getElementById('signup-modal');
+        const recoverModal = document.getElementById('recover-modal');
+        const recoverForm = document.getElementById('recoverForm');
+        const recoverEmailInput = document.getElementById('recoverEmail');
+        const recoverMessage = document.getElementById('recover-message');
+
         // REFERÊNCIAS MODAL PEDIDO
-        const openPedidoFormBtn = document.getElementById('open-pedido-form-btn');
         const pedidoModal = document.getElementById('pedido-modal'); 
-        const pedidoCloseBtn = document.querySelector('.pedido-close-btn'); 
         const pedidoForm = document.getElementById('pedidoForm');
         const pedidoMessage = document.getElementById('pedido-message');
         const submitPedidoBtn = document.getElementById('submit-pedido-btn');
         const historicoLista = document.getElementById('historico-lista');
-        const filtroStatus = document.getElementById('filtroStatus'); // NOVO FILTRO
+        const filtroStatus = document.getElementById('filtroStatus'); 
+        const precoUnitarioInput = document.getElementById('precoUnitario');
+        const quantidadeInput = document.getElementById('quantidade');
+        const valorTotalInput = document.getElementById('valorTotal');
+        const formaPagamentoOptions = document.getElementById('formaPagamentoOptions');
+        const gasPriceDisplay = document.getElementById('gas-price-display');
 
-        // REFERÊNCIAS MODAL CONSUMO E GRÁFICO
-        const consumoDisplay = document.getElementById('consumo-display');
-        const openConsumoFormBtn = document.getElementById('open-consumo-form-btn');
+        // REFERÊNCIAS MODAL CONSUMO (Garantido Funcionamento)
         const consumoModal = document.getElementById('consumo-modal');
-        const consumoCloseBtn = document.querySelector('.consumo-close-btn');
         const consumoForm = document.getElementById('consumoForm');
         const consumoMessage = document.getElementById('consumo-message');
-        const chartCanvas = document.getElementById('pedidosChart');
-        let monthlyChart = null;
+        const consumoDisplay = document.getElementById('consumo-display');
+        const diasDuracaoInput = document.getElementById('diasDuracao');
+        const dataRegistroInput = document.getElementById('dataRegistro');
+        const submitConsumoBtn = document.getElementById('submit-consumo-btn'); // Botão de salvar
 
-        // REGISTRA O PLUGIN DATALABELS
+        let monthlyChart = null;
+        let userProfileData = {}; 
+        
         if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
             Chart.register(ChartDataLabels);
         }
         
-        // EVENT LISTENER PARA O FILTRO
-        filtroStatus.addEventListener('change', () => {
-            if (auth.currentUser) {
-                loadUserData(auth.currentUser.uid); 
-            }
-        });
-
-
         // =========================================================
-        // FUNÇÕES DE CONTROLE DE TELA E DADOS
+        // 3. FUNÇÕES PRINCIPAIS DE LÓGICA
         // =========================================================
+        
+        function updateTotalValue() {
+            const quantidade = parseInt(quantidadeInput.value) || 0;
+            const total = quantidade * GAS_PRICE_BRL;
+            valorTotalInput.value = `R$ ${total.toFixed(2).replace('.', ',')}`; 
+            precoUnitarioInput.value = `R$ ${GAS_PRICE_BRL.toFixed(2).replace('.', ',')}`; 
+        }
+        
+        function getSelectedPaymentMethod() {
+            const selectedRadio = formaPagamentoOptions.querySelector('input[name="formaPagamento"]:checked');
+            return selectedRadio ? selectedRadio.value : '';
+        }
 
         /** Alterna a visualização entre Login e Dashboard */
         function toggleView(isLoggedIn, user) {
             if (isLoggedIn) {
                 loginSection.style.display = 'none';
                 dashboardSection.style.display = 'block';
-                userEmailDisplay.textContent = user.email;
+                document.getElementById('user-email-display').textContent = user.email;
+                
+                if (gasPriceDisplay) {
+                    gasPriceDisplay.textContent = `R$ ${GAS_PRICE_BRL.toFixed(2).replace('.', ',')}`;
+                }
+                
                 loadUserData(user.uid);
             } else {
                 loginSection.style.display = 'flex';
                 dashboardSection.style.display = 'none';
-                loginForm.reset();
-                pedidoModal.style.display = 'none'; 
-                consumoModal.style.display = 'none';
+                document.getElementById('loginForm').reset();
+                [pedidoModal, consumoModal, signupModal, recoverModal].forEach(modal => modal.style.display = 'none'); 
+                userProfileData = {}; 
+                if (monthlyChart) monthlyChart.destroy();
             }
         }
-
-        /** Carrega Histórico, Consumo e Gera o Gráfico do Firebase */
+        
+        /** Carrega dados do perfil, histórico (otimizado), consumo e gráfico */
         async function loadUserData(uid) {
-            // 1. CARREGAR HISTÓRICO DE PEDIDOS E DADOS PARA O GRÁFICO
-            historicoLista.innerHTML = '<li><i class="fas fa-spinner fa-spin"></i> Carregando pedidos...</li>';
+            historicoLista.innerHTML = '<li><i class="fas fa-spinner fa-spin"></i> Carregando dados...</li>';
             let pedidosData = {}; 
             const filtroAtual = filtroStatus.value; 
             
+            // 1. Carregar dados do Perfil (Whatsapp/Endereço)
             try {
-                // Busca todos os pedidos
+                const snapshotUser = await database.ref(`usuarios/${uid}`).once('value');
+                userProfileData = snapshotUser.val() || {}; 
+            } catch (error) {
+                console.error("Erro ao carregar dados do usuário:", error);
+            }
+            
+            // 2. Carregar Histórico de Pedidos (Otimizado: Limitado aos últimos 10)
+            try {
                 const snapshotPedidos = await database.ref('pedidos/')
                     .orderByChild('userId')
                     .equalTo(uid)
+                    .limitToLast(10) 
                     .once('value'); 
 
                 const pedidos = snapshotPedidos.val();
@@ -305,30 +712,32 @@
 
                 if (pedidos) {
                     pedidosData = pedidos; 
+                    let pedidosArray = Object.values(pedidos); 
                     
-                    let pedidosArray = Object.values(pedidos).reverse(); 
+                    pedidosArray.reverse();
 
-                    // APLICA O FILTRO DE STATUS
                     if (filtroAtual !== 'todos') {
                         pedidosArray = pedidosArray.filter(p => p.status === filtroAtual);
                     }
 
-                    const pedidosParaExibir = pedidosArray.slice(0, 5); // Limita a 5 (já filtrados)
+                    const pedidosParaExibir = pedidosArray.slice(0, 5); // Exibe 5 no painel
 
                     if (pedidosParaExibir.length > 0) {
-                         pedidosParaExibir.forEach(p => {
+                        pedidosParaExibir.forEach(p => {
                             const li = document.createElement('li');
                             const statusClass = p.status === 'Entregue' ? 'status-entregue' : 'status-pendente';
                             const icon = p.status === 'Entregue' ? 'fa-check-circle' : 'fa-sync-alt';
-                            const dataFormatada = new Date(p.dataPedido).toLocaleDateString('pt-BR');
+                            const dataFormatada = p.dataPedido ? new Date(p.dataPedido).toLocaleDateString('pt-BR') : 'Data Indefinida';
+                            
+                            const valorTotal = p.valorTotal ? ` (R$ ${p.valorTotal.toFixed(2).replace('.', ',')})` : '';
 
-                            li.innerHTML = `<i class="fas ${icon} ${statusClass}"></i> ${p.tipoGas} x${p.quantidade} (${p.formaPagamento || 'Não Informado'}) - <strong class="${statusClass}">${p.status}</strong> (${dataFormatada})`;
+                            li.innerHTML = `<i class="fas ${icon} ${statusClass}"></i> ${p.tipoGas} x${p.quantidade}${valorTotal} - <strong style="color: ${p.status === 'Entregue' ? 'var(--secondary-color)' : 'var(--warning-color)'};">${p.status}</strong> (${dataFormatada})`;
                             historicoLista.appendChild(li);
                         });
                     } else {
-                         historicoLista.innerHTML = `<li>Nenhum pedido com status "${filtroAtual}" encontrado.</li>`;
+                        historicoLista.innerHTML = `<li>Nenhum pedido com status "${filtroAtual}" encontrado.</li>`;
                     }
-                   
+                    
                 } else {
                     historicoLista.innerHTML = '<li>Nenhum pedido encontrado.</li>';
                 }
@@ -337,10 +746,9 @@
                 console.error("Erro ao carregar pedidos:", error);
             }
             
-            // 2. GERAR GRÁFICO
             createMonthlyChart(pedidosData);
 
-            // 3. CARREGAR CONSUMO
+            // 3. Carregar Consumo
             consumoDisplay.textContent = '---';
             try {
                 const snapshotConsumo = await database.ref(`consumo/${uid}`).once('value');
@@ -353,13 +761,13 @@
                 }
             } catch (error) {
                 consumoDisplay.textContent = 'Erro de leitura.';
-                console.error("Erro de leitura do consumo:", error);
+                console.log("Erro de leitura do consumo:", error);
             }
         }
 
-        /** Processa os dados de pedidos e gera o gráfico mensal com data labels. */
+        /** Cria ou atualiza o gráfico mensal de pedidos */
         function createMonthlyChart(pedidos) {
-            if (!pedidos || Object.keys(pedidos).length === 0 || !chartCanvas) {
+            if (!pedidos || Object.keys(pedidos).length === 0 || !document.getElementById('pedidosChart')) {
                 if (monthlyChart) monthlyChart.destroy(); 
                 return;
             }
@@ -368,7 +776,7 @@
             
             const monthlyData = {};
             Object.values(pedidos).forEach(pedido => {
-                if (!pedido.quantidade) return;
+                if (!pedido.quantidade || !pedido.dataPedido) return;
                 
                 const date = new Date(pedido.dataPedido);
                 const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
@@ -391,7 +799,7 @@
                 monthlyChart.destroy();
             }
             
-            const ctx = chartCanvas.getContext('2d');
+            const ctx = document.getElementById('pedidosChart').getContext('2d');
             monthlyChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -410,222 +818,334 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Quantidade de Botijões'
-                            },
-                            ticks: {
-                                stepSize: 1 
-                            }
+                            title: { display: true, text: 'Quantidade de Botijões' },
+                            ticks: { stepSize: 1 }
                         }
                     },
                     plugins: {
-                        legend: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'Histórico de Compras de Gás'
-                        },
-                        datalabels: { 
-                            anchor: 'end', 
-                            align: 'top', 
-                            formatter: (value) => value,
-                            color: '#333', 
-                            font: {
-                                weight: 'bold' 
-                            },
-                            offset: 4 
-                        }
+                        legend: { display: false },
+                        title: { display: true, text: 'Histórico de Compras de Gás' },
+                        datalabels: { anchor: 'end', align: 'top', formatter: (value) => value, color: '#333', font: { weight: 'bold' }, offset: 4 }
                     }
                 }
             });
         }
 
-
-        // =========================================================
-        // LÓGICA DE AUTENTICAÇÃO
-        // =========================================================
-
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                toggleView(true, user);
-            } else {
-                toggleView(false);
-            }
-        });
-
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            errorMessage.textContent = ''; 
-            auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value)
-                .catch((error) => {
-                    errorMessage.textContent = '❌ Erro: E-mail ou senha incorretos.';
-                });
-        });
-
-        signupButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            errorMessage.textContent = ''; 
-            auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value)
-                .catch((error) => {
-                    let msg = (error.code === 'auth/email-already-in-use') ? 'O e-mail fornecido já está em uso.' : 'A senha deve ter pelo menos 6 caracteres.';
-                    errorMessage.textContent = `❌ Erro: ${msg}`;
-                });
-        });
-
-        logoutButton.addEventListener('click', () => {
-            auth.signOut().then(() => {
-                alert("Logout realizado com sucesso.");
-            }).catch((error) => {
-                console.error('Erro ao fazer logout:', error);
-            });
-        });
-
-
-        // =========================================================
-        // LÓGICA DE MODAL E PEDIDOS
-        // =========================================================
-        
-        // ABRIR O MODAL DE PEDIDO
-        openPedidoFormBtn.addEventListener('click', () => {
-            pedidoModal.style.display = 'block'; 
-            consumoModal.style.display = 'none'; 
-            submitPedidoBtn.disabled = false;
-            pedidoMessage.textContent = '';
-        });
-
-        // FECHAR MODAIS
-        pedidoCloseBtn.addEventListener('click', () => {
-            pedidoModal.style.display = 'none';
-        });
-        
-        consumoCloseBtn.addEventListener('click', () => {
-            consumoModal.style.display = 'none';
-        });
-
-        // FECHAR QUALQUER MODAL (Clicar fora)
-        window.addEventListener('click', (event) => {
-            if (event.target == pedidoModal) {
-                pedidoModal.style.display = 'none';
-            }
-            if (event.target == consumoModal) {
-                consumoModal.style.display = 'none';
-            }
-        });
-
-        // SUBMISSÃO DO FORMULÁRIO DE PEDIDO
-        pedidoForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            fazerPedidoDeGas();
-        });
-
-        /** * Salva o pedido no Firebase e TENTA abrir o WhatsApp. */
-        function fazerPedidoDeGas() {
+        /** Salva o pedido no DB e abre o WhatsApp do vendedor */
+        async function fazerPedidoDeGas() {
             const user = auth.currentUser;
             if (!user) return;
 
             const tipoGas = document.getElementById('tipoGas').value;
-            const quantidade = document.getElementById('quantidade').value;
+            const quantidade = parseInt(document.getElementById('quantidade').value);
             const endereco = document.getElementById('endereco').value;
-            const formaPagamento = document.getElementById('formaPagamento').value; 
+            const formaPagamento = getSelectedPaymentMethod(); 
             
-            // 1. Feedback e Desativação do botão
+            if (!formaPagamento) {
+                pedidoMessage.style.color = 'red';
+                pedidoMessage.textContent = '❌ Por favor, selecione a Forma de Pagamento.';
+                return;
+            }
+
+            const valorTotal = quantidade * GAS_PRICE_BRL;
+
             submitPedidoBtn.disabled = true;
             pedidoMessage.style.color = 'blue';
             pedidoMessage.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando pedido e **tentando abrir o WhatsApp**...';
 
-            const pedido = {
+            const dataPedido = new Date().toISOString(); 
+
+            const novoPedido = {
                 userId: user.uid,
                 email: user.email,
                 tipoGas: tipoGas,
-                quantidade: parseInt(quantidade),
+                quantidade: quantidade,
+                valorTotal: valorTotal,
                 endereco: endereco,
-                formaPagamento: formaPagamento, 
-                dataPedido: new Date().toISOString(),
-                status: 'Pendente'
+                formaPagamento: formaPagamento,
+                dataPedido: dataPedido,
+                status: "Pendente" 
             };
 
-            // 2. Salva no Firebase
-            database.ref('pedidos/').push(pedido)
-                .then(() => {
-                    // 3. Monta a Mensagem do WhatsApp
-                    
-                    const mensagem = `*NOVO PEDIDO URGENTE!*%0A%0AUsuário: ${user.email}%0AProduto: ${tipoGas} (x${quantidade})%0AEndereço: ${endereco}%0APagamento: *${formaPagamento}*%0A%0A*UID:* ${user.uid.substring(0, 8)}...`;
-                    
-                    // Número deve ser apenas dígitos.
-                    const url = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${mensagem}`;
-                    
-                    window.open(url, '_blank');
-                    
-                    pedidoMessage.style.color = 'green';
-                    pedidoMessage.innerHTML = '✅ Pedido salvo! Verifique se a aba do WhatsApp foi aberta.';
-                    
-                    pedidoForm.reset(); 
-                    loadUserData(user.uid); 
+            try {
+                await database.ref('pedidos').push(novoPedido);
+                
+                await loadUserData(user.uid); 
+                
+                const whatsappUsuario = userProfileData.whatsapp || 'Não cadastrado'; 
+                
+                const mensagem = `Olá, gostaria de fazer um pedido de gás!%0A%0A*Detalhes do Pedido:*%0A- *Usuário:* ${user.email}%0A- *WhatsApp Cliente:* ${whatsappUsuario}%0A- *Tipo:* ${tipoGas}%0A- *Quantidade:* ${quantidade}%0A- *Valor Total:* R$ ${valorTotal.toFixed(2).replace('.', ',')}%0A- *Pagamento:* ${formaPagamento}%0A- *Endereço:* ${endereco}%0A%0AAguardamos a confirmação!`;
 
-                    // 4. Finalização: Fechar Modal
-                    submitPedidoBtn.disabled = false;
-                    setTimeout(() => {
-                         pedidoModal.style.display = 'none'; 
-                    }, 5000);
+                const urlWhatsapp = `https://wa.me/${whatsappNumber}?text=${mensagem}`;
 
-                })
-                .catch((error) => {
-                    // 5. Tratamento de Erro
-                    pedidoMessage.style.color = 'red';
-                    pedidoMessage.textContent = '❌ Erro ao salvar pedido: ' + error.message;
-                    submitPedidoBtn.disabled = false;
-                });
+                window.open(urlWhatsapp, '_blank');
+                
+                pedidoMessage.style.color = 'green';
+                pedidoMessage.textContent = '✅ Pedido registrado e WhatsApp aberto com sucesso!';
+                
+                setTimeout(() => {
+                    pedidoModal.style.display = 'none';
+                }, 3000); 
+
+            } catch (error) {
+                pedidoMessage.style.color = 'red';
+                pedidoMessage.textContent = '❌ Erro ao registrar o pedido: ' + error.message;
+                console.error("Erro ao registrar pedido:", error);
+            } finally {
+                submitPedidoBtn.disabled = false;
+            }
+        }
+        
+        /** Salva o registro de consumo */
+        async function salvarConsumo() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const diasDuracao = parseInt(diasDuracaoInput.value);
+            const dataRegistro = dataRegistroInput.value;
+            
+            if (diasDuracao <= 0 || !dataRegistro) {
+                consumoMessage.style.color = 'red';
+                consumoMessage.textContent = '❌ Preencha todos os campos corretamente.';
+                return;
+            }
+
+            submitConsumoBtn.disabled = true;
+            consumoMessage.style.color = 'blue';
+            consumoMessage.textContent = 'Registrando consumo...';
+
+            const novoConsumo = {
+                diasDuracao: diasDuracao,
+                dataRegistro: dataRegistro
+            };
+
+            try {
+                // Salva diretamente na referência do usuário (sobrescreve o último registro)
+                await database.ref(`consumo/${user.uid}`).set(novoConsumo); 
+                
+                await loadUserData(user.uid); 
+                
+                consumoMessage.style.color = 'green';
+                consumoMessage.textContent = '✅ Consumo registrado com sucesso!';
+                
+                setTimeout(() => {
+                    consumoModal.style.display = 'none';
+                    consumoForm.reset();
+                }, 3000); 
+
+            } catch (error) {
+                consumoMessage.style.color = 'red';
+                consumoMessage.textContent = '❌ Erro ao salvar consumo: ' + error.message;
+                console.error("Erro ao salvar consumo:", error);
+            } finally {
+                submitConsumoBtn.disabled = false;
+            }
         }
 
 
         // =========================================================
-        // LÓGICA DE MODAL E CONSUMO
+        // 4. FUNÇÕES DE AUTENTICAÇÃO
         // =========================================================
 
-        // ABRIR O MODAL DE CONSUMO
-        openConsumoFormBtn.addEventListener('click', () => {
-            consumoModal.style.display = 'block';
-            pedidoModal.style.display = 'none'; 
-            consumoMessage.textContent = '';
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            errorMessage.textContent = '';
+            document.getElementById('loginButton').disabled = true;
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                errorMessage.textContent = `❌ Erro de Login: ${handleAuthError(error.code)}`;
+            } finally {
+                document.getElementById('loginButton').disabled = false;
+            }
         });
 
-        // SUBMISSÃO DO FORMULÁRIO DE CONSUMO
+        document.getElementById('signupFormModal').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('modalEmail').value;
+            const password = document.getElementById('modalPassword').value;
+            const whatsapp = document.getElementById('modalWhatsapp').value;
+            const signupMessage = document.getElementById('signup-message');
+            
+            signupMessage.textContent = '';
+            document.getElementById('modalSignupButton').disabled = true;
+
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const uid = userCredential.user.uid;
+                
+                await database.ref(`usuarios/${uid}`).set({
+                    whatsapp: whatsapp,
+                    cadastro: new Date().toISOString()
+                });
+                
+                signupMessage.style.color = 'green';
+                signupMessage.textContent = '✅ Cadastro realizado com sucesso! Faça seu login.';
+                
+                setTimeout(() => {
+                    signupModal.style.display = 'none';
+                    document.getElementById('signupFormModal').reset();
+                }, 3000); 
+
+            } catch (error) {
+                signupMessage.style.color = 'red';
+                signupMessage.textContent = `❌ Erro de Cadastro: ${handleAuthError(error.code)}`;
+                console.error("Erro de Cadastro:", error);
+            } finally {
+                document.getElementById('modalSignupButton').disabled = false;
+            }
+        });
+
+        recoverForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = recoverEmailInput.value;
+            
+            recoverMessage.textContent = '';
+            document.getElementById('recoverButton').disabled = true;
+
+            try {
+                await auth.sendPasswordResetEmail(email);
+                
+                recoverMessage.style.color = 'green';
+                recoverMessage.textContent = `✅ Link de recuperação enviado para ${email}. Verifique seu e-mail.`;
+                
+                setTimeout(() => {
+                    recoverModal.style.display = 'none';
+                    recoverForm.reset();
+                }, 5000); 
+                
+            } catch (error) {
+                recoverMessage.style.color = 'red';
+                recoverMessage.textContent = `❌ Erro: ${handleAuthError(error.code)}`;
+            } finally {
+                document.getElementById('recoverButton').disabled = false;
+            }
+        });
+        
+        function handleAuthError(code) {
+            switch (code) {
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                    return 'Email ou senha inválidos.';
+                case 'auth/email-already-in-use':
+                    return 'Este email já está cadastrado.';
+                case 'auth/weak-password':
+                    return 'A senha deve ter pelo menos 6 caracteres.';
+                case 'auth/invalid-email':
+                    return 'O formato do email é inválido.';
+                case 'auth/network-request-failed':
+                    return 'Erro de conexão. Verifique sua internet.';
+                default:
+                    return 'Ocorreu um erro desconhecido.';
+            }
+        }
+
+
+        // =========================================================
+        // 5. EVENTOS DO APP (LISTENERS DE ESTADO E INTERAÇÃO)
+        // =========================================================
+
+        auth.onAuthStateChanged(user => {
+            toggleView(!!user, user);
+        });
+
+        logoutButton.addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // Eventos do Modal Pedido
+        document.getElementById('open-pedido-form-btn').addEventListener('click', () => {
+            pedidoModal.style.display = 'block';
+            updateTotalValue(); 
+            pedidoMessage.textContent = '';
+            submitPedidoBtn.disabled = false;
+            // Preenche o endereço, se houver
+            document.getElementById('endereco').value = userProfileData.endereco || ''; 
+        });
+        
+        document.querySelectorAll('.pedido-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => { pedidoModal.style.display = 'none'; pedidoForm.reset(); });
+        });
+        
+        quantidadeInput.addEventListener('input', updateTotalValue);
+        
+        // Atualiza a seleção visual do pagamento
+        document.querySelectorAll('.payment-option-label').forEach(label => {
+            label.addEventListener('click', () => {
+                document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+                label.querySelector('.payment-option').classList.add('selected');
+            });
+        });
+
+        // Submissão do Pedido
+        pedidoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            fazerPedidoDeGas();
+        });
+        
+        // Eventos do Modal Consumo
+        document.getElementById('open-consumo-form-btn').addEventListener('click', () => {
+            consumoModal.style.display = 'block';
+            consumoMessage.textContent = '';
+            submitConsumoBtn.disabled = false; // Usa a referência correta
+        });
+
+        document.querySelectorAll('.consumo-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => { consumoModal.style.display = 'none'; consumoForm.reset(); });
+        });
+        
         consumoForm.addEventListener('submit', (e) => {
             e.preventDefault();
             salvarConsumo();
         });
 
-        function salvarConsumo() {
-            const user = auth.currentUser;
-            if (!user) return;
+        // Eventos do Modal Cadastro
+        document.getElementById('openSignupModalBtn').addEventListener('click', () => {
+            signupModal.style.display = 'block';
+            document.getElementById('signup-message').textContent = '';
+        });
+        
+        document.querySelectorAll('.signup-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => { signupModal.style.display = 'none'; document.getElementById('signupFormModal').reset(); });
+        });
 
-            const diasDuracao = document.getElementById('diasDuracao').value;
-            const dataRegistro = document.getElementById('dataRegistro').value;
+        // Eventos do Modal Recuperação
+        document.getElementById('openRecoverModalBtn').addEventListener('click', () => {
+            recoverModal.style.display = 'block';
+            document.getElementById('recover-message').textContent = '';
+        });
 
-            const consumoData = {
-                diasDuracao: parseInt(diasDuracao),
-                dataRegistro: new Date(dataRegistro).toISOString(),
-                registradoEm: new Date().toISOString()
-            };
+        document.querySelectorAll('.recover-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => { recoverModal.style.display = 'none'; recoverForm.reset(); });
+        });
 
-            consumoMessage.textContent = 'Salvando...';
-            
-            database.ref(`consumo/${user.uid}`).set(consumoData)
-                .then(() => {
-                    consumoMessage.style.color = 'green';
-                    consumoMessage.textContent = '✅ Consumo registrado com sucesso!';
-                    consumoForm.reset();
-                    consumoModal.style.display = 'none'; 
-                    loadUserData(user.uid); 
-                })
-                .catch((error) => {
-                    consumoMessage.style.color = 'red';
-                    consumoMessage.textContent = '❌ Erro ao salvar consumo: ' + error.message;
-                });
-        }
+        // Evento de Filtro de Histórico
+        filtroStatus.addEventListener('change', () => {
+            if (auth.currentUser) {
+                loadUserData(auth.currentUser.uid);
+            }
+        });
+
+        // Fecha o modal ao clicar fora dele
+        window.addEventListener('click', (event) => {
+            if (event.target === pedidoModal) {
+                pedidoModal.style.display = 'none';
+            }
+            if (event.target === consumoModal) {
+                consumoModal.style.display = 'none';
+            }
+            if (event.target === signupModal) {
+                signupModal.style.display = 'none';
+            }
+            if (event.target === recoverModal) {
+                recoverModal.style.display = 'none';
+            }
+        });
+        
     </script>
-
 </body>
 </html>
